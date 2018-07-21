@@ -1,0 +1,6 @@
+G:\Arjan\Workspace\Visual Studio\StardewMod\RemoteFridgeStorage\RemoteFridgeStorage\bin\Debug\RemoteFridgeStorage.dll
+G:\Arjan\Workspace\Visual Studio\StardewMod\RemoteFridgeStorage\RemoteFridgeStorage\bin\Debug\RemoteFridgeStorage.pdb
+G:\Arjan\Workspace\Visual Studio\StardewMod\RemoteFridgeStorage\RemoteFridgeStorage\obj\Debug\RemoteFridgeStorage.csprojAssemblyReference.cache
+G:\Arjan\Workspace\Visual Studio\StardewMod\RemoteFridgeStorage\RemoteFridgeStorage\obj\Debug\RemoteFridgeStorage.csproj.CoreCompileInputs.cache
+G:\Arjan\Workspace\Visual Studio\StardewMod\RemoteFridgeStorage\RemoteFridgeStorage\obj\Debug\RemoteFridgeStorage.dll
+G:\Arjan\Workspace\Visual Studio\StardewMod\RemoteFridgeStorage\RemoteFridgeStorage\obj\Debug\RemoteFridgeStorage.pdb
