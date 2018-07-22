@@ -1,22 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
-using StardewValley;
-using StardewValley.Locations;
+using StardewValley.Events;
 using StardewValley.Menus;
-using StardewValley.Objects;
-using Object = System.Object;
 
-namespace StardewMod
+namespace RemoteFridgeStorage
 {
     /// <summary>The mod entry point.</summary>
     public class ModEntry : Mod
     {
-        private IModHelper helper;
-        private FridgeHandler handler;
+        private IModHelper _helper;
+        private FridgeHandler _handler;
 
         /*********
         ** Public methods
@@ -25,10 +18,16 @@ namespace StardewMod
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
-            this.helper = helper;
-            handler = new FridgeHandler();
+            _helper = helper;
+            _handler = new FridgeHandler();
             MenuEvents.MenuChanged += MenuChanged_Event;
             MenuEvents.MenuClosed += MenuClosed_Event;
+            PlayerEvents.InventoryChanged += InventoryChanged_Event;
+        }
+
+        private void InventoryChanged_Event(object sender, EventArgsInventoryChanged e)
+        {
+            _handler.UpdateStorage();
         }
 
         /// <summary>
@@ -38,9 +37,9 @@ namespace StardewMod
         /// <param name="e"></param>
         private void MenuClosed_Event(object sender, EventArgsClickableMenuClosed e)
         {
-            if (e.PriorMenu is CraftingPage page && helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+            if (e.PriorMenu is CraftingPage page && _helper.Reflection.GetField<bool>(page, "cooking").GetValue())
             {
-                handler.RemoveItems();
+                _handler.RemoveItems();
             }
         }
 
@@ -51,9 +50,9 @@ namespace StardewMod
         /// <param name="e"></param>
         private void MenuChanged_Event(object sender, EventArgsClickableMenuChanged e)
         {
-            if (e.NewMenu is CraftingPage page && helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+            if (e.NewMenu is CraftingPage page && _helper.Reflection.GetField<bool>(page, "cooking").GetValue())
             {
-                handler.LoadItems();
+                _handler.LoadItems();
             }
         }
     }

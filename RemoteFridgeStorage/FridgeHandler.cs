@@ -1,20 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Objects;
 
-namespace StardewMod
+namespace RemoteFridgeStorage
 {
     /// <summary>
     /// Takes care of adding and removing elements for crafting.
     /// </summary>
     internal class FridgeHandler
     {
-        private List<Item> items;
-        private List<ChestIndex> ChestIndices = new List<ChestIndex>();
+        private List<Item> _items;
+        private readonly List<ChestIndex> _chestIndices = new List<ChestIndex>();
+        private bool _active;
 
         /// <summary>
         /// Unloads the items from the chest from the fridge,
@@ -22,11 +20,13 @@ namespace StardewMod
         /// </summary>
         public void RemoveItems()
         {
+            if (!_active) return;
             if (!(Game1.getLocationFromName("FarmHouse") is FarmHouse farmHouse)) return;
 
             UpdateStorage();
 
-            farmHouse.fridge.items = items;
+            farmHouse.fridge.items = _items;
+            _active = false;
         }
 
         /// <summary>
@@ -34,9 +34,10 @@ namespace StardewMod
         /// </summary>
         public void UpdateStorage()
         {
+            if (!_active) return;
             if (!(Game1.getLocationFromName("FarmHouse") is FarmHouse farmHouse)) return;
-            
-            foreach (var chestIndex in ChestIndices)
+
+            foreach (var chestIndex in _chestIndices)
             {
                 for (var i = 0; i < chestIndex.Count; i++)
                 {
@@ -50,25 +51,27 @@ namespace StardewMod
         /// </summary>
         public void LoadItems()
         {
+            if (_active) return;
             if (!(Game1.getLocationFromName("FarmHouse") is FarmHouse farmHouse)) return;
 
-            items = farmHouse.fridge.items;
-            ChestIndices.Clear();
+            _items = farmHouse.fridge.items;
+            _chestIndices.Clear();
 
             var tempItems = new List<Item>();
-            
-            var fridge = new Chest {items = items};
-            ChestIndices.Add(new ChestIndex(fridge, 0, items.Count));
-            
-            tempItems.AddRange(items);
+
+            var fridge = new Chest {items = _items};
+            _chestIndices.Add(new ChestIndex(fridge, 0, _items.Count));
+
+            tempItems.AddRange(_items);
             foreach (var chest in GetChests())
             {
-                ChestIndices.Add(new ChestIndex(chest, tempItems.Count, chest.items.Count));
+                _chestIndices.Add(new ChestIndex(chest, tempItems.Count, chest.items.Count));
                 tempItems.AddRange(chest.items);
             }
 
 
             farmHouse.fridge.items = tempItems;
+            _active = true;
         }
 
         private IEnumerable<Chest> GetChests()
