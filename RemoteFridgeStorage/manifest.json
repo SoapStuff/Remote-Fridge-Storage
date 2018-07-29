@@ -1,10 +1,10 @@
 ﻿{
   "Name": "RemoteFridgeStorage",
   "Author": "EternalSoap",
-  "Version": "1.0.0",
+  "Version": "1.0.1-BETA",
   "Description": "Allows you to use ingredients inside ",
   "UniqueID": "EternalSoap.RemoteFridgeStorage",
   "EntryDll": "RemoteFridgeStorage.dll",
   "MinimumApiVersion": "2.0",
-  "UpdateKeys": []
+  "UpdateKeys": [ "Nexus:2545" ]
 }

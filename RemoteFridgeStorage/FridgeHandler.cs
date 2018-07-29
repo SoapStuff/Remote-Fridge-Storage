@@ -10,7 +10,6 @@ namespace RemoteFridgeStorage
     /// </summary>
     internal class FridgeHandler
     {
-        private List<Item> _items;
         private readonly List<ChestIndex> _chestIndices = new List<ChestIndex>();
         private bool _active;
 
@@ -25,7 +24,8 @@ namespace RemoteFridgeStorage
 
             UpdateStorage();
 
-            farmHouse.fridge.items = _items;
+            farmHouse.fridge.Value.items.Clear();
+            farmHouse.fridge.Value.items.AddRange(_chestIndices[0].Chest.items);
             _active = false;
         }
 
@@ -41,7 +41,7 @@ namespace RemoteFridgeStorage
             {
                 for (var i = 0; i < chestIndex.Count; i++)
                 {
-                    chestIndex.Chest.items[i] = farmHouse.fridge.items[chestIndex.Start + i];
+                    chestIndex.Chest.items[i] = farmHouse.fridge.Value.items[chestIndex.Start + i];
                 }
             }
         }
@@ -54,36 +54,32 @@ namespace RemoteFridgeStorage
             if (_active) return;
             if (!(Game1.getLocationFromName("FarmHouse") is FarmHouse farmHouse)) return;
 
-            _items = farmHouse.fridge.items;
             _chestIndices.Clear();
 
-            var tempItems = new List<Item>();
 
-            var fridge = new Chest {items = _items};
-            _chestIndices.Add(new ChestIndex(fridge, 0, _items.Count));
+            var fridge = new Chest();
+            fridge.items.AddRange(farmHouse.fridge.Value.items);
+            
+            _chestIndices.Add(new ChestIndex(fridge, 0, fridge.items.Count));
 
-            tempItems.AddRange(_items);
             foreach (var chest in GetChests())
             {
-                _chestIndices.Add(new ChestIndex(chest, tempItems.Count, chest.items.Count));
-                tempItems.AddRange(chest.items);
+                _chestIndices.Add(new ChestIndex(chest, farmHouse.fridge.Value.items.Count, chest.items.Count));
+                farmHouse.fridge.Value.items.AddRange(chest.items);
             }
 
-
-            farmHouse.fridge.items = tempItems;
             _active = true;
         }
 
         private IEnumerable<Chest> GetChests()
         {
             var chests = new List<Chest>();
-            if (Game1.getLocationFromName("FarmHouse") is FarmHouse farmHouse)
+            if (!(Game1.getLocationFromName("FarmHouse") is FarmHouse farmHouse)) return chests;
+            
+            foreach (var objectsValue in farmHouse.Objects.Values)
             {
-                foreach (var pair in farmHouse.Objects)
-                {
-                    if (!(pair.Value is Chest chest) || !chest.playerChest) continue;
-                    chests.Add(chest);
-                }
+                if (!(objectsValue is Chest chest) || !chest.playerChest.Value) continue;
+                chests.Add(chest);
             }
 
             return chests;
