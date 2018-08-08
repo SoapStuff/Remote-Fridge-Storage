@@ -1,6 +1,5 @@
 ﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewValley.Events;
 using StardewValley.Menus;
 
 namespace RemoteFridgeStorage
