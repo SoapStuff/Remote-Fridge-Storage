@@ -14,31 +14,58 @@ namespace RemoteFridgeStorage
     /// </summary>
     internal class FridgeHandler
     {
-        private readonly Texture2D _textureFridge;
-        private readonly Texture2D _textureFridge2;
-
+        /// <summary>
+        /// List of pairs with the chests that currently are added to the items in the fridge.
+        /// </summary>
         private readonly List<ChestIndex> _chestIndices = new List<ChestIndex>();
+        /// <summary>
+        /// If the player currently is crafting
+        /// </summary>
         private bool _active;
 
+        /// <summary>
+        /// Set of all chests that are included.
+        /// </summary>
         private readonly HashSet<Chest> _chests = new HashSet<Chest>();
-        private ClickableTextureComponent _fridge1;
-        private ClickableTextureComponent _fridge2;
+        
+        /// <summary>
+        /// Texture button state included.
+        /// </summary>
+        private readonly ClickableTextureComponent _fridge1;
+        /// <summary>
+        /// Texture button state excluded (default state)
+        /// </summary>
+        private readonly ClickableTextureComponent _fridge2;
 
+        /// <summary>
+        /// If the chest is currently open.
+        /// </summary>
+        private bool _opened;
+
+        /// <summary>
+        /// Creats a new handler for fridge items.
+        /// </summary>
+        /// <param name="textureFridge"></param>
+        /// <param name="textureFridge2"></param>
         public FridgeHandler(Texture2D textureFridge, Texture2D textureFridge2)
         {
-            _textureFridge = textureFridge;
-            _textureFridge2 = textureFridge2;
-            Resize();
+            _opened = false;
+            _fridge1 = new ClickableTextureComponent(Rectangle.Empty, textureFridge, Rectangle.Empty, 1f);
+            _fridge2 = new ClickableTextureComponent(Rectangle.Empty, textureFridge2, Rectangle.Empty, 1f);
+            UpdatePos();
         }
 
         /// <summary>
-        /// Resize the buttons.
+        /// Update the position of the button.
         /// </summary>
-        public void Resize()
+        private void UpdatePos()
         {
-            var rectangle = new Rectangle(448 , 342 , 60, 60);
-            _fridge1 = new ClickableTextureComponent(rectangle, _textureFridge, new Rectangle(), 1f);
-            _fridge2 = new ClickableTextureComponent(rectangle, _textureFridge2, new Rectangle(), 1f);
+            var menu = Game1.activeClickableMenu;
+            if (menu == null) return;
+
+            _fridge1.bounds = _fridge2.bounds = new Rectangle(menu.xPositionOnScreen - 17 * Game1.pixelZoom,
+                menu.yPositionOnScreen + Game1.tileSize + Game1.pixelZoom * 5, 16 * Game1.pixelZoom,
+                16 * Game1.pixelZoom);
         }
 
         /// <summary>
@@ -48,11 +75,13 @@ namespace RemoteFridgeStorage
         public void RemoveItems()
         {
             if (!_active) return;
+            
             var farmHouse = Game1.getLocationFromName("FarmHouse") as FarmHouse;
 
             UpdateStorage();
 
             farmHouse?.fridge.Value.items.Clear();
+            //The first index was always that of the fridge.
             farmHouse?.fridge.Value.items.AddRange(_chestIndices[0].Chest.items);
             _active = false;
         }
@@ -63,6 +92,7 @@ namespace RemoteFridgeStorage
         public void UpdateStorage()
         {
             if (!_active) return;
+            
             var farmHouse = Game1.getLocationFromName("FarmHouse") as FarmHouse;
 
             foreach (var chestIndex in _chestIndices)
@@ -107,15 +137,21 @@ namespace RemoteFridgeStorage
             return _chests;
         }
 
+        /// <summary>
+        /// Handle the click event if it was on the fridge icon.
+        /// </summary>
+        /// <param name="eventArgsInput"></param>
         public void HandleClick(EventArgsInput eventArgsInput)
         {
             var chest = GetOpenChest();
             if (chest == null) return;
 
             var screenPixels = eventArgsInput.Cursor.ScreenPixels;
-            Game1.playSound("smallSelect");
+
             if (!_fridge1.containsPoint((int) screenPixels.X, (int) screenPixels.Y)) return;
 
+            Game1.playSound("smallSelect");
+            
             if (_chests.Contains(chest))
             {
                 _chests.Remove(chest);
@@ -126,7 +162,7 @@ namespace RemoteFridgeStorage
             }
         }
 
-        /// <summary>
+       /// <summary>
         /// Gets the chest that is currently open or null if no chest is open.
         /// </summary>
         /// <returns>The chest that is open</returns>
@@ -154,8 +190,10 @@ namespace RemoteFridgeStorage
 
             var farmHouse = Game1.getLocationFromName("farmHouse") as FarmHouse;
 
-            if (openChest == farmHouse?.fridge.Value || Game1.activeClickableMenu == null) return;
+            if (openChest == farmHouse?.fridge.Value || Game1.activeClickableMenu == null ||
+                !openChest.playerChest.Value) return;
 
+            UpdatePos();
             if (_chests.Contains(openChest))
                 _fridge1.draw(Game1.spriteBatch);
             else
@@ -171,6 +209,7 @@ namespace RemoteFridgeStorage
         /// </summary>
         public void LoadSave()
         {
+            //
             _chests.Clear();
             var farmHouse = Game1.getLocationFromName("farmHouse") as FarmHouse;
             foreach (var gameLocation in Game1.locations)
@@ -193,16 +232,9 @@ namespace RemoteFridgeStorage
         /// </summary>
         public void Save()
         {
-            foreach (var gameLocation in Game1.locations)
+            foreach (var chest in _chests)
             {
-                foreach (var gameLocationObject in gameLocation.objects.Values)
-                {
-                    if (!(gameLocationObject is Chest chest)) continue;
-                    if (_chests.Contains(chest))
-                    {
-                        chest.fridge.Value = true;
-                    }
-                }
+                chest.fridge.Value = true;
             }
         }
 
@@ -212,19 +244,30 @@ namespace RemoteFridgeStorage
         public void AfterSave()
         {
             //Reset the fridge flag for all chests.
-            foreach (var gameLocation in Game1.locations)
+            foreach (var chest in _chests)
             {
-                foreach (var gameLocationObject in gameLocation.objects.Values)
-                {
-                    if (gameLocationObject is Chest chest)
-                    {
-                        if (_chests.Contains(chest))
-                        {
-                            chest.fridge.Value = false;
-                        }
-                    }
-                }
+                chest.fridge.Value = false;
             }
+        }
+
+        /// <summary>
+        /// Listen to ticks update to determine when a chest opens or closes.
+        /// </summary>
+        public void Update()
+        {
+            var chest = GetOpenChest();
+            if (chest == null && _opened)
+            {
+                //Chest close event;
+            }
+
+            if (chest != null && !_opened)
+            {
+                //Chest open event
+                UpdatePos();
+            }
+
+            _opened = chest != null;
         }
     }
 

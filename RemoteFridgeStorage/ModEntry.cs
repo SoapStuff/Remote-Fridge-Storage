@@ -24,52 +24,59 @@ namespace RemoteFridgeStorage
             var textureFridge = helper.Content.Load<Texture2D>("assets/fridge.png", ContentSource.ModFolder);
             var textureFridge2 = helper.Content.Load<Texture2D>("assets/fridge2.png", ContentSource.ModFolder);
 
+            if (textureFridge == null || textureFridge2 == null)
+                Monitor.Log("One of the images could not be loaded", LogLevel.Warn);
+
             _handler = new FridgeHandler(textureFridge, textureFridge2);
 
             MenuEvents.MenuChanged += MenuChanged_Event;
             MenuEvents.MenuClosed += MenuClosed_Event;
             PlayerEvents.InventoryChanged += InventoryChanged_Event;
             InputEvents.ButtonPressed += Button_Pressed_Event;
+
             GraphicsEvents.OnPostRenderGuiEvent += Draw;
-            GraphicsEvents.Resize += Resize;
+
             SaveEvents.AfterLoad += AfterLoad;
             SaveEvents.BeforeSave += BeforeSave;
             SaveEvents.AfterSave += AfterSave;
+            GameEvents.UpdateTick += Game_Update;
+        }
+
+        private void Game_Update(object sender, EventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            _handler.Update();
         }
 
         private void AfterSave(object sender, EventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.AfterSave();
         }
 
         private void BeforeSave(object sender, EventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.Save();
         }
 
         private void AfterLoad(object sender, EventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.LoadSave();
         }
 
-        private void Resize(object sender, EventArgs e)
-        {
-            if (!Context.IsWorldReady)
-                return;
-            _handler.Resize();
-        }
 
         private void Draw(object sender, EventArgs e)
         {
-            if (!Context.IsWorldReady)
-                return;
+            if (!Context.IsWorldReady) return;
             _handler.DrawFridge();
         }
 
         private void Button_Pressed_Event(object sender, EventArgsInput e)
         {
-            if (!Context.IsWorldReady)
-                return;
+            if (!Context.IsWorldReady) return;
+
             if (e.Button == SButton.MouseLeft)
             {
                 _handler.HandleClick(e);
@@ -78,8 +85,7 @@ namespace RemoteFridgeStorage
 
         private void InventoryChanged_Event(object sender, EventArgsInventoryChanged e)
         {
-            if (!Context.IsWorldReady)
-                return;
+            if (!Context.IsWorldReady) return;
             _handler.UpdateStorage();
         }
 
