@@ -14,7 +14,16 @@ Allows you to use chests for storing your cooking ingridients instead of storing
 * Compatible with [Expanded Fridge](https://www.nexusmods.com/stardewvalley/mods/1191)
 * May be incompatible with mods that make changes to cooking or chests.
 
+# Usage
+Place a chest anywhere in the world and click the fridge icon to mark it as an ingridient chest.
+
+![ChestGif](https://staticdelivery.nexusmods.com/mods/1303/images/2545/2545-1533757113-75967091.gif)
+
+
+# Uninstalling
+Make sure all chests are unmarked for usage by the fridge. Then delete the RemoteFridgeStorage folder.
+
 # Planned Features
 * Multiplayer compatibility
-* Choose which chests are included for ingridients
-* Use chests anywhere in the world instead of only the farmhouse.
+* ~~Choose which chests are included for ingridients~~
+* ~~Use chests anywhere in the world instead of only the farmhouse.~~
