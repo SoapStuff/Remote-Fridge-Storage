@@ -1,9 +1,9 @@
 ![Image](https://staticdelivery.nexusmods.com/mods/1303/images/2545/2545-1532260591-702566672.png)
 
-#Description
+# Description
 Allows you to use chests for storing your cooking ingridients instead of storing it all in the fridge. When you use the counter to start cooking it will look through all the chests inside the farmhouse to look for ingridients.
 
-#Installation
+# Installation
 * Install [SMAPI](https://smapi.io).
 * Unzip this mod into Stardew Valley/Mods.
 * Run the game using SMAPI.
