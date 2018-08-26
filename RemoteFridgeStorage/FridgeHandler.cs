@@ -14,10 +14,13 @@ namespace RemoteFridgeStorage
     /// </summary>
     internal class FridgeHandler
     {
+        private readonly bool _categorizeChestsLoaded;
+
         /// <summary>
         /// List of pairs with the chests that currently are added to the items in the fridge.
         /// </summary>
         private readonly List<ChestIndex> _chestIndices = new List<ChestIndex>();
+
         /// <summary>
         /// If the player currently is crafting
         /// </summary>
@@ -27,11 +30,12 @@ namespace RemoteFridgeStorage
         /// Set of all chests that are included.
         /// </summary>
         private readonly HashSet<Chest> _chests = new HashSet<Chest>();
-        
+
         /// <summary>
         /// Texture button state included.
         /// </summary>
         private readonly ClickableTextureComponent _fridge1;
+
         /// <summary>
         /// Texture button state excluded (default state)
         /// </summary>
@@ -47,8 +51,10 @@ namespace RemoteFridgeStorage
         /// </summary>
         /// <param name="textureFridge"></param>
         /// <param name="textureFridge2"></param>
-        public FridgeHandler(Texture2D textureFridge, Texture2D textureFridge2)
+        /// <param name="categorizeChestsLoaded"></param>
+        public FridgeHandler(Texture2D textureFridge, Texture2D textureFridge2, bool categorizeChestsLoaded)
         {
+            _categorizeChestsLoaded = categorizeChestsLoaded;
             _opened = false;
             _fridge1 = new ClickableTextureComponent(Rectangle.Empty, textureFridge, Rectangle.Empty, 1f);
             _fridge2 = new ClickableTextureComponent(Rectangle.Empty, textureFridge2, Rectangle.Empty, 1f);
@@ -63,19 +69,31 @@ namespace RemoteFridgeStorage
             var menu = Game1.activeClickableMenu;
             if (menu == null) return;
 
-            _fridge1.bounds = _fridge2.bounds = new Rectangle(menu.xPositionOnScreen - 17 * Game1.pixelZoom,
-                menu.yPositionOnScreen + Game1.tileSize + Game1.pixelZoom * 5, 16 * Game1.pixelZoom,
+            var xOffset = 0.0;
+            var yOffset = 1.0;
+            if (_categorizeChestsLoaded)
+            {
+                xOffset = -1.0;
+                yOffset = -0.25;
+            }
+
+            var xScaledOffset = (int) (xOffset * Game1.tileSize);
+            var yScaledOffset = (int) (yOffset * Game1.tileSize);
+            
+            _fridge1.bounds = _fridge2.bounds = new Rectangle(
+                menu.xPositionOnScreen - 17 * Game1.pixelZoom + xScaledOffset,
+                menu.yPositionOnScreen + yScaledOffset + Game1.pixelZoom * 5, 16 * Game1.pixelZoom,
                 16 * Game1.pixelZoom);
         }
 
         /// <summary>
         /// Unloads the items from the chest from the fridge,
-        /// and update the chests to remove used ingridients.
+        /// and update the chests to remove used ingredients.
         /// </summary>
         public void RemoveItems()
         {
             if (!_active) return;
-            
+
             var farmHouse = Game1.getLocationFromName("FarmHouse") as FarmHouse;
 
             UpdateStorage();
@@ -87,12 +105,12 @@ namespace RemoteFridgeStorage
         }
 
         /// <summary>
-        /// Updates the chests to remove used ingridients.
+        /// Updates the chests to remove used ingredients.
         /// </summary>
         public void UpdateStorage()
         {
             if (!_active) return;
-            
+
             var farmHouse = Game1.getLocationFromName("FarmHouse") as FarmHouse;
 
             foreach (var chestIndex in _chestIndices)
@@ -151,7 +169,7 @@ namespace RemoteFridgeStorage
             if (!_fridge1.containsPoint((int) screenPixels.X, (int) screenPixels.Y)) return;
 
             Game1.playSound("smallSelect");
-            
+
             if (_chests.Contains(chest))
             {
                 _chests.Remove(chest);
@@ -162,7 +180,7 @@ namespace RemoteFridgeStorage
             }
         }
 
-       /// <summary>
+        /// <summary>
         /// Gets the chest that is currently open or null if no chest is open.
         /// </summary>
         /// <returns>The chest that is open</returns>

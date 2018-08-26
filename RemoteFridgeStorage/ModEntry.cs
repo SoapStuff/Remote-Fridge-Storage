@@ -27,7 +27,9 @@ namespace RemoteFridgeStorage
             if (textureFridge == null || textureFridge2 == null)
                 Monitor.Log("One of the images could not be loaded", LogLevel.Warn);
 
-            _handler = new FridgeHandler(textureFridge, textureFridge2);
+            var categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests") ||
+                                         helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
+            _handler = new FridgeHandler(textureFridge, textureFridge2, categorizeChestsLoaded);
 
             MenuEvents.MenuChanged += MenuChanged_Event;
             MenuEvents.MenuClosed += MenuClosed_Event;
