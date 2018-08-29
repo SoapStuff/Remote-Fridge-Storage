@@ -100,10 +100,18 @@ namespace RemoteFridgeStorage
         {
             if (!Context.IsWorldReady)
                 return;
-            if (e.PriorMenu is CraftingPage page && Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+            try
             {
-                _handler.RemoveItems();
+                if (e.PriorMenu is IClickableMenu page && Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+                {
+                    _handler.RemoveItems();
+                }
             }
+            catch (InvalidOperationException ignore)
+            {
+                
+            }
+            
         }
 
         /// <summary>
@@ -115,11 +123,19 @@ namespace RemoteFridgeStorage
         {
             if (!Context.IsWorldReady)
                 return;
-            if (e.NewMenu is IClickableMenu page && Helper.Reflection.GetField<bool>(page, "cooking") != null &&
-                Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+            try
             {
-                _handler.LoadItems();
+                if (e.NewMenu is IClickableMenu page && Helper.Reflection.GetField<bool>(page, "cooking") != null &&
+                    Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+                {
+                    _handler.LoadItems();
+                }
             }
+            catch (InvalidOperationException ignore)
+            {
+                //This is a temporary work around.
+            }
+            
         }
     }
 }
