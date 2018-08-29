@@ -115,7 +115,8 @@ namespace RemoteFridgeStorage
         {
             if (!Context.IsWorldReady)
                 return;
-            if (e.NewMenu is CraftingPage page && Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+            if (e.NewMenu is IClickableMenu page && Helper.Reflection.GetField<bool>(page, "cooking") != null &&
+                Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
             {
                 _handler.LoadItems();
             }
