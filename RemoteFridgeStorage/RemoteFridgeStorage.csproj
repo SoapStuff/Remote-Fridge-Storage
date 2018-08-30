@@ -44,6 +44,7 @@
     <Compile Include="FridgeHandler.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoteFrigdeCraftingMenu.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
