@@ -13,9 +13,16 @@ namespace RemoteFridgeStorage
     /// </summary>
     public class FridgeVirtualListBase : VirtualListBase<Item, Chest>
     {
-        public FridgeVirtualListBase(FridgeHandler fridgeHandler) : base(fridgeHandler.Chests.ToList(),
+        public FridgeVirtualListBase(FridgeHandler fridgeHandler) : base(ToList(fridgeHandler),
             chest => chest.items)
         {
+        }
+
+        private static List<Chest> ToList(FridgeHandler fridgeHandler)
+        {
+            var chests = fridgeHandler.Chests.ToList();
+            if (Game1.getLocationFromName("farmHouse") is FarmHouse farm) chests.Add(farm.fridge.Value);
+            return chests;
         }
     }
 
