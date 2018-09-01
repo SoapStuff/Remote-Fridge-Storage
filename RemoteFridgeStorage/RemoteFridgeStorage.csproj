@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Stardew Valley\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,8 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FridgeHandler.cs" />
+    <Compile Include="HarmonyRecipePatch.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoteFrigdeCraftingMenu.cs" />
+    <Compile Include="VirtualListBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

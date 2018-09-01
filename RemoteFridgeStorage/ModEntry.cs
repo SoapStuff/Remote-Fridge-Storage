@@ -1,39 +1,37 @@
 ﻿using System;
-using Microsoft.Xna.Framework;
+using System.Collections.Generic;
+using System.Reflection;
+using Harmony;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using StardewValley.Menus;
 
 namespace RemoteFridgeStorage
 {
     /// <summary>The mod entry point.</summary>
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class ModEntry : Mod
     {
         private FridgeHandler _handler;
+        public static ModEntry Instance;
+        private HarmonyInstance _harmony;
 
-
-        /*********
-        ** Public methods
-        *********/
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
-            var textureFridge = helper.Content.Load<Texture2D>("assets/fridge.png", ContentSource.ModFolder);
-            var textureFridge2 = helper.Content.Load<Texture2D>("assets/fridge2.png", ContentSource.ModFolder);
+            Instance = this;
+            Harmony();
 
-            if (textureFridge == null || textureFridge2 == null)
-                Monitor.Log("One of the images could not be loaded", LogLevel.Warn);
+            var fridgeSelected = helper.Content.Load<Texture2D>("assets/fridge.png");
+            var fridgeDeselected = helper.Content.Load<Texture2D>("assets/fridge2.png");
 
             var categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests") ||
                                          helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
-            _handler = new FridgeHandler(textureFridge, textureFridge2, categorizeChestsLoaded);
+            _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, categorizeChestsLoaded);
 
             MenuEvents.MenuChanged += MenuChanged_Event;
-            MenuEvents.MenuClosed += MenuClosed_Event;
-            PlayerEvents.InventoryChanged += InventoryChanged_Event;
             InputEvents.ButtonPressed += Button_Pressed_Event;
 
             GraphicsEvents.OnPostRenderGuiEvent += Draw;
@@ -44,10 +42,17 @@ namespace RemoteFridgeStorage
             GameEvents.UpdateTick += Game_Update;
         }
 
+        private void Harmony()
+        {
+            _harmony = HarmonyInstance.Create("productions.EternalSoap.RemoteFridgeStorage");
+            _harmony.PatchAll(Assembly.GetExecutingAssembly());
+            
+        }
+
         private void Game_Update(object sender, EventArgs e)
         {
             if (!Context.IsWorldReady) return;
-            _handler.Update();
+            _handler.Game_Update();
         }
 
         private void AfterSave(object sender, EventArgs e)
@@ -59,13 +64,13 @@ namespace RemoteFridgeStorage
         private void BeforeSave(object sender, EventArgs e)
         {
             if (!Context.IsWorldReady) return;
-            _handler.Save();
+            _handler.BeforeSave();
         }
 
         private void AfterLoad(object sender, EventArgs e)
         {
             if (!Context.IsWorldReady) return;
-            _handler.LoadSave();
+            _handler.AfterLoad();
         }
 
 
@@ -85,40 +90,39 @@ namespace RemoteFridgeStorage
             }
         }
 
-        private void InventoryChanged_Event(object sender, EventArgsInventoryChanged e)
-        {
-            if (!Context.IsWorldReady) return;
-            _handler.UpdateStorage();
-        }
-
         /// <summary>
-        /// If the closed menu was a crafting menu, call the handler to reset the items.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MenuClosed_Event(object sender, EventArgsClickableMenuClosed e)
-        {
-            if (!Context.IsWorldReady)
-                return;
-            if (e.PriorMenu is CraftingPage page && Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
-            {
-                _handler.RemoveItems();
-            }
-        }
-
-        /// <summary>
-        /// If the opened menu was a crafting menu, call the handler to add load the items.
+        /// If the opened menu was a crafting menu, call the handler to load the menu.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void MenuChanged_Event(object sender, EventArgsClickableMenuChanged e)
         {
-            if (!Context.IsWorldReady)
-                return;
-            if (e.NewMenu is CraftingPage page && Helper.Reflection.GetField<bool>(page, "cooking").GetValue())
+            if (!Context.IsWorldReady) return;
+            if (e.NewMenu != null &&
+                Helper.Reflection.GetField<bool>(e.NewMenu, "cooking", false) != null &&
+                Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue() &&
+                !(e.NewMenu is RemoteFridgeCraftingPage))
             {
-                _handler.LoadItems();
+                _handler.LoadMenu(e);
             }
+        }
+
+        /// <summary>
+        /// Return the list used for the fridge items.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual IList<Item> FridgeImpl()
+        {
+            return new FridgeVirtualListBase(_handler);
+        }
+
+        /// <summary>
+        /// Calls the FridgeImpl method on the ModEntry instance.
+        /// </summary>
+        /// <returns></returns>
+        public static IList<Item> Fridge()
+        {
+            return Instance.FridgeImpl();
         }
     }
 }
