@@ -113,7 +113,7 @@ namespace RemoteFridgeStorage
         /// <returns></returns>
         protected virtual IList<Item> FridgeImpl()
         {
-            return new VirtualList(_handler);
+            return new FridgeVirtualListBase(_handler);
         }
 
         /// <summary>

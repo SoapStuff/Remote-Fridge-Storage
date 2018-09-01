@@ -9,7 +9,7 @@ using StardewValley;
 
 namespace RemoteFridgeStorage
 {
-    internal class HarmonyRecipePatch
+    public class HarmonyRecipePatch
     {
         static bool Prefix(CraftingRecipe instance)
         {

@@ -49,7 +49,7 @@
     <Compile Include="ModEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemoteFrigdeCraftingMenu.cs" />
-    <Compile Include="VirtualList.cs" />
+    <Compile Include="VirtualListBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -12,7 +12,7 @@ namespace RemoteFridgeStorage
     /// <summary>
     /// Takes care of adding and removing elements for crafting.
     /// </summary>
-    internal class FridgeHandler
+    public class FridgeHandler
     {
         /// <summary>
         /// Is true when the _categorizeChests is loaded so that the icon can be moved.
