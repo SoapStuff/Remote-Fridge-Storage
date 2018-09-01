@@ -213,10 +213,7 @@ namespace RemoteFridgeStorage
         /// <param name="argEvents"></param>
         public void LoadMenu(EventArgsClickableMenuChanged argEvents)
         {
-            if (!(argEvents.NewMenu is CraftingPage page)) return;
-            
-            ModEntry.instance.Monitor.Log("This is called");
-            Game1.activeClickableMenu = new RemoteFridgeCraftingPage(page, this);
+            Game1.activeClickableMenu = new RemoteFridgeCraftingPage(argEvents.NewMenu, this);
         }
 
 
