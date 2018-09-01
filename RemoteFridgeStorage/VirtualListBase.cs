@@ -77,6 +77,9 @@ namespace RemoteFridgeStorage
         private readonly IList<TSupplier> _suppliers;
         private readonly Func<TSupplier, IList<T>> _converter;
 
+        public VirtualListBase(Func<TSupplier, IList<T>> converter) : this(new List<TSupplier>(), converter)
+        {
+        }
 
         public VirtualListBase(IList<TSupplier> suppliers, Func<TSupplier, IList<T>> converter)
         {

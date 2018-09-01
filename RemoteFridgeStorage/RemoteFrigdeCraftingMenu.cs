@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using StardewValley;
 using StardewValley.Menus;
-using StardewValley.Objects;
 
 namespace RemoteFridgeStorage
 {

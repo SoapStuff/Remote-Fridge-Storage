@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Harmony;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -43,10 +44,9 @@ namespace RemoteFridgeStorage
 
         private void Harmony()
         {
-            _harmony = HarmonyInstance.Create("com.EternalSoap.RemoteFridgeStorage");
-            var original = typeof(CraftingRecipe).GetMethod("consumeIngredients");
-            var prefix = typeof(HarmonyRecipePatch).GetMethod("Prefix");
-            _harmony.Patch(original, new HarmonyMethod(prefix), null);
+            _harmony = HarmonyInstance.Create("productions.EternalSoap.RemoteFridgeStorage");
+            _harmony.PatchAll(Assembly.GetExecutingAssembly());
+            
         }
 
         private void Game_Update(object sender, EventArgs e)

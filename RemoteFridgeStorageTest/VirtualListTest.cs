@@ -3,8 +3,6 @@ using System.Linq;
 using NUnit.Framework;
 using RemoteFridgeStorage;
 
-// ReSharper disable SuggestVarOrType_Elsewhere
-
 namespace RemoteFridgeStorageTest
 {
     [TestFixture]
@@ -169,7 +167,7 @@ namespace RemoteFridgeStorageTest
                 Assert.AreEqual(ints[i], i - 2);
             }
         }
-        
+
         [Test]
         public void CopyBig()
         {
@@ -186,5 +184,51 @@ namespace RemoteFridgeStorageTest
                 Assert.AreEqual(ints[i], i - 2);
             }
         }
+
+        [Test]
+        public void BasicFunctionalityTestWithSupplier()
+        {
+            VirtualList<int> list = new VirtualList<int>();
+            List<int> numbers1 = new List<int> {0, 1, 2, 3};
+            List<int> numbers2 = new List<int> {4, 5, 6};
+            List<int> numbers3 = new List<int> {7, 8, 9, 10, 11};
+            list.AddSuppliers(numbers1, numbers2, numbers3);
+            Assert.AreEqual(list.Count, 12);
+            for (int i = 0; i < 12; i++)
+            {
+                Assert.AreEqual(list[i], i);
+                Assert.AreEqual(list.IndexOf(i), i);
+            }
+        }
+
+        [Test]
+        public void InsertItemsOriginalListsWithSupplier()
+        {
+            VirtualListBase<int, IntSupplier> list = new VirtualListBase<int, IntSupplier>(intSupplier => intSupplier.Ints);
+            IntSupplier numbers1 = new IntSupplier(new List<int> {0, 1, 2, 3});
+            IntSupplier numbers2 = new IntSupplier(new List<int> {5, 6, 7});
+            IntSupplier numbers3 = new IntSupplier(new List<int> {9, 10, 12, 13, 14});
+            list.AddSuppliers(numbers1, numbers2, numbers3);
+
+            list.Add(15);
+            list.Insert(4, 4);
+            list.Insert(8, 8);
+            list.Insert(11, 11);
+
+            Assert.AreEqual(numbers2.Ints[0], 4);
+            Assert.AreEqual(numbers3.Ints[0], 8);
+            Assert.AreEqual(numbers3.Ints[3], 11);
+            Assert.AreEqual(numbers3.Ints[7], 15);
+        }
+    }
+
+    internal class IntSupplier
+    {
+        public IntSupplier(List<int> ints)
+        {
+            Ints = ints;
+        }
+
+        public List<int> Ints { get; set; }
     }
 }
