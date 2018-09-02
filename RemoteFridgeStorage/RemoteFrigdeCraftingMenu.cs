@@ -19,7 +19,7 @@ namespace RemoteFridgeStorage
 
         protected override IList<Item> fridge()
         {
-            return new FridgeVirtualListBase(_fridgeHandler);
+            return new FridgeVirtualList(_fridgeHandler);
         }
     }
 }

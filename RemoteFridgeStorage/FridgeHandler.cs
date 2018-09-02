@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
+using StardewValley.Network;
 using StardewValley.Objects;
 
 namespace RemoteFridgeStorage
@@ -14,6 +16,9 @@ namespace RemoteFridgeStorage
     /// </summary>
     public class FridgeHandler
     {
+        public HashSet<Chest> Chests { get; }
+        private readonly NetObjectList<Chest> _netChests;
+
         /// <summary>
         /// Is true when the _categorizeChests is loaded so that the icon can be moved.
         /// </summary>
@@ -35,7 +40,7 @@ namespace RemoteFridgeStorage
         private bool _opened;
 
         /// <summary>
-        /// Creats a new handler for fridge items.
+        /// Creates a new handler for fridge items.
         /// </summary>
         /// <param name="textureFridge"></param>
         /// <param name="textureFridge2"></param>
@@ -46,7 +51,9 @@ namespace RemoteFridgeStorage
             _opened = false;
             _fridgeSelected = new ClickableTextureComponent(Rectangle.Empty, textureFridge, Rectangle.Empty, 1f);
             _fridgeDeselected = new ClickableTextureComponent(Rectangle.Empty, textureFridge2, Rectangle.Empty, 1f);
-            UpdatePos();
+            Chests = new HashSet<Chest>();
+            _netChests = new NetObjectList<Chest>();
+            
         }
 
         /// <summary>
@@ -216,7 +223,7 @@ namespace RemoteFridgeStorage
             Game1.activeClickableMenu = new RemoteFridgeCraftingPage(argEvents.NewMenu, this);
         }
 
-
-        public HashSet<Chest> Chests { get; } = new HashSet<Chest>();
+        
     }
+
 }
