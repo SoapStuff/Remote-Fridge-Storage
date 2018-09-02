@@ -11,9 +11,9 @@ namespace RemoteFridgeStorage
     /// <summary>
     /// The list for using the remoteFridgeStorage.
     /// </summary>
-    public class FridgeVirtualListBase : VirtualListBase<Item, Chest>
+    public class FridgeVirtualList : VirtualListBase<Item, Chest>
     {
-        public FridgeVirtualListBase(FridgeHandler fridgeHandler) : base(ToList(fridgeHandler),
+        public FridgeVirtualList(FridgeHandler fridgeHandler) : base(ToList(fridgeHandler),
             chest => chest.items)
         {
         }

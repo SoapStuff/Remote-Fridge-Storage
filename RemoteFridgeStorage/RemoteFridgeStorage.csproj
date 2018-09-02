@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="apis\ICookingSkillApi.cs" />
     <Compile Include="FridgeHandler.cs" />
     <Compile Include="HarmonyRecipePatch.cs" />
     <Compile Include="ModEntry.cs" />
