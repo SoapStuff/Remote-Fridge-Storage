@@ -24,6 +24,8 @@ namespace RemoteFridgeStorage
         /// </summary>
         private readonly bool _categorizeChestsLoaded;
 
+        private readonly bool _cookingSkillLoaded;
+
         /// <summary>
         /// Texture button state included.
         /// </summary>
@@ -53,7 +55,6 @@ namespace RemoteFridgeStorage
             _fridgeDeselected = new ClickableTextureComponent(Rectangle.Empty, textureFridge2, Rectangle.Empty, 1f);
             Chests = new HashSet<Chest>();
             _netChests = new NetObjectList<Chest>();
-            
         }
 
         /// <summary>
@@ -220,10 +221,10 @@ namespace RemoteFridgeStorage
         /// <param name="argEvents"></param>
         public void LoadMenu(EventArgsClickableMenuChanged argEvents)
         {
-            Game1.activeClickableMenu = new RemoteFridgeCraftingPage(argEvents.NewMenu, this);
+            if (!_categorizeChestsLoaded || ModEntry.Instance.CookinSkillApi == null)
+            {
+                Game1.activeClickableMenu = new RemoteFridgeCraftingPage(argEvents.NewMenu, this);
+            }
         }
-
-        
     }
-
 }

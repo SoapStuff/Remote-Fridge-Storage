@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Harmony;
 using Microsoft.Xna.Framework.Graphics;
+using RemoteFridgeStorage.apis;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -16,6 +17,8 @@ namespace RemoteFridgeStorage
         private FridgeHandler _handler;
         public static ModEntry Instance;
         private HarmonyInstance _harmony;
+        private bool cookingSkillLoaded;
+        public ICookingSkillApi CookinSkillApi { get; private set; }
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
@@ -29,11 +32,12 @@ namespace RemoteFridgeStorage
 
             var categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests") ||
                                          helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
+            cookingSkillLoaded = helper.ModRegistry.IsLoaded("spacechase0.CookingSkill");
             _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, categorizeChestsLoaded);
 
             MenuEvents.MenuChanged += MenuChanged_Event;
             InputEvents.ButtonPressed += Button_Pressed_Event;
-
+            GameEvents.FirstUpdateTick += Game_FirstTick;
             GraphicsEvents.OnPostRenderGuiEvent += Draw;
 
             SaveEvents.AfterLoad += AfterLoad;
@@ -42,16 +46,29 @@ namespace RemoteFridgeStorage
             GameEvents.UpdateTick += Game_Update;
         }
 
+        private void Game_FirstTick(object sender, EventArgs e)
+        {
+            if (cookingSkillLoaded)
+            {
+                CookinSkillApi = Helper.ModRegistry.GetApi<ICookingSkillApi>("spacechase0.CookingSkill");
+
+                if (CookinSkillApi == null)
+                    Monitor.Log(
+                        "Could not load Cookingskill API, mods might not work correctly, are you using the correct version of cooking skills?");
+                else CookinSkillApi.setFridgeFunction(Fridge);
+            }
+        }
+
         private void Harmony()
         {
             _harmony = HarmonyInstance.Create("productions.EternalSoap.RemoteFridgeStorage");
             _harmony.PatchAll(Assembly.GetExecutingAssembly());
-            
         }
 
         private void Game_Update(object sender, EventArgs e)
         {
             if (!Context.IsWorldReady) return;
+
             _handler.Game_Update();
         }
 
