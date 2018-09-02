@@ -47,8 +47,11 @@ namespace RemoteFridgeStorage
         /// <param name="textureFridge"></param>
         /// <param name="textureFridge2"></param>
         /// <param name="categorizeChestsLoaded"></param>
-        public FridgeHandler(Texture2D textureFridge, Texture2D textureFridge2, bool categorizeChestsLoaded)
+        /// <param name="cookingSkillLoaded"></param>
+        public FridgeHandler(Texture2D textureFridge, Texture2D textureFridge2, bool categorizeChestsLoaded,
+            bool cookingSkillLoaded)
         {
+            _cookingSkillLoaded = cookingSkillLoaded;
             _categorizeChestsLoaded = categorizeChestsLoaded;
             _opened = false;
             _fridgeSelected = new ClickableTextureComponent(Rectangle.Empty, textureFridge, Rectangle.Empty, 1f);
@@ -221,7 +224,7 @@ namespace RemoteFridgeStorage
         /// <param name="argEvents"></param>
         public void LoadMenu(EventArgsClickableMenuChanged argEvents)
         {
-            if (!_categorizeChestsLoaded || ModEntry.Instance.CookinSkillApi == null)
+            if (!_cookingSkillLoaded || ModEntry.Instance.CookinSkillApi == null)
             {
                 Game1.activeClickableMenu = new RemoteFridgeCraftingPage(argEvents.NewMenu, this);
             }

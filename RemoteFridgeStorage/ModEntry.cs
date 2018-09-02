@@ -33,7 +33,8 @@ namespace RemoteFridgeStorage
             var categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests") ||
                                          helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
             cookingSkillLoaded = helper.ModRegistry.IsLoaded("spacechase0.CookingSkill");
-            _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, categorizeChestsLoaded);
+            if (cookingSkillLoaded) Monitor.Log("Cooking skill is loaded on game start try to hook into the api");
+            _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, categorizeChestsLoaded, cookingSkillLoaded);
 
             MenuEvents.MenuChanged += MenuChanged_Event;
             InputEvents.ButtonPressed += Button_Pressed_Event;
@@ -53,9 +54,16 @@ namespace RemoteFridgeStorage
                 CookinSkillApi = Helper.ModRegistry.GetApi<ICookingSkillApi>("spacechase0.CookingSkill");
 
                 if (CookinSkillApi == null)
+                {
                     Monitor.Log(
-                        "Could not load Cookingskill API, mods might not work correctly, are you using the correct version of cooking skills?");
-                else CookinSkillApi.setFridgeFunction(Fridge);
+                        "Could not load Cookingskill API, mods might not work correctly, are you using the correct version of cooking skills?",
+                        LogLevel.Warn);
+                }
+                else
+                {
+                    CookinSkillApi.setFridgeFunction(Fridge);
+                    Monitor.Log("Succesfully hooked into the cooking skill API!", LogLevel.Info);
+                }
             }
         }
 
