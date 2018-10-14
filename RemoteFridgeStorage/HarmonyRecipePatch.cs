@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Harmony;
 using Microsoft.Xna.Framework;
@@ -7,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
 using Object = StardewValley.Object;
+// ReSharper disable InconsistentNaming
 
 // Just some IDE things.
 // ReSharper disable RedundantTypeArgumentsOfMethod

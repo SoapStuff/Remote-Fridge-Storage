@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
@@ -17,6 +18,8 @@ namespace RemoteFridgeStorage
     public class FridgeHandler
     {
         public HashSet<Chest> Chests { get; }
+        public IList<Item> FridgeList { get; private set; }
+
         private readonly NetObjectList<Chest> _netChests;
 
         /// <summary>
@@ -160,18 +163,34 @@ namespace RemoteFridgeStorage
             //
             Chests.Clear();
             var farmHouse = Game1.getLocationFromName("farmHouse") as FarmHouse;
-            foreach (var gameLocation in Game1.locations)
+            foreach (var gameLocation in GetLocations())
             {
                 foreach (var gameLocationObject in gameLocation.objects.Values)
                 {
-                    if (!(gameLocationObject is Chest chest)) continue;
-
-                    if (chest.fridge.Value && chest != farmHouse?.fridge.Value)
-                    {
-                        Chests.Add(chest);
-                        chest.fridge.Value = false;
-                    }
+                    LoadChest(gameLocationObject, farmHouse);
                 }
+            }
+        }
+
+        public static IEnumerable<GameLocation> GetLocations()
+        {
+            return Game1.locations
+                .Concat(
+                    from location in Game1.locations.OfType<BuildableGameLocation>()
+                    from building in location.buildings
+                    where building.indoors.Value != null
+                    select building.indoors.Value
+                );
+        }
+
+        private void LoadChest(Object gameLocationObject, FarmHouse farmHouse)
+        {
+            if (!(gameLocationObject is Chest chest)) return;
+
+            if (chest.fridge.Value && chest != farmHouse?.fridge.Value)
+            {
+                Chests.Add(chest);
+                chest.fridge.Value = false;
             }
         }
 
@@ -207,11 +226,13 @@ namespace RemoteFridgeStorage
             if (chest == null && _opened)
             {
                 //Chest close event;
+                FridgeList = new FridgeVirtualList(this);
             }
 
             if (chest != null && !_opened)
             {
                 //Chest open event
+                FridgeList = new FridgeVirtualList(this);
                 UpdatePos();
             }
 

@@ -69,6 +69,7 @@ namespace RemoteFridgeStorage
 
         private void Harmony()
         {
+            if (cookingSkillLoaded) return;
             _harmony = HarmonyInstance.Create("productions.EternalSoap.RemoteFridgeStorage");
             _harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
@@ -123,6 +124,7 @@ namespace RemoteFridgeStorage
         private void MenuChanged_Event(object sender, EventArgsClickableMenuChanged e)
         {
             if (!Context.IsWorldReady) return;
+            //Replace menu if the new menu has the attribute cooking set to true and the new menu is not my crafting page.
             if (e.NewMenu != null &&
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking", false) != null &&
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue() &&
@@ -138,7 +140,7 @@ namespace RemoteFridgeStorage
         /// <returns></returns>
         protected virtual IList<Item> FridgeImpl()
         {
-            return new FridgeVirtualList(_handler);
+            return _handler.FridgeList;
         }
 
         /// <summary>
