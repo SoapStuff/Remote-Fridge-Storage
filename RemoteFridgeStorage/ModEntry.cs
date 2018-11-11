@@ -56,7 +56,7 @@ namespace RemoteFridgeStorage
                 if (CookinSkillApi == null)
                 {
                     Monitor.Log(
-                        "Could not load Cookingskill API, mods might not work correctly, are you using the correct version of cooking skills?",
+                        "Could not load Cookingskill API, mods might not work correctly, are you using the patched version of cooking skills https://github.com/SoapStuff/CookingSkill/releases?",
                         LogLevel.Warn);
                 }
                 else
