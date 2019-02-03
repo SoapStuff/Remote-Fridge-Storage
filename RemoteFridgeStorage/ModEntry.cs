@@ -16,7 +16,6 @@ namespace RemoteFridgeStorage
     {
         private FridgeHandler _handler;
         public static ModEntry Instance;
-        private HarmonyInstance _harmony;
         private bool cookingSkillLoaded;
         public ICookingSkillApi CookinSkillApi { get; private set; }
 
@@ -74,9 +73,19 @@ namespace RemoteFridgeStorage
 
         private void Harmony()
         {
-            if (cookingSkillLoaded) return;
-            _harmony = HarmonyInstance.Create("productions.EternalSoap.RemoteFridgeStorage");
-            _harmony.PatchAll(Assembly.GetExecutingAssembly());
+            if (cookingSkillLoaded)
+                return;
+
+            var harmony = HarmonyInstance.Create("productions.EternalSoap.RemoteFridgeStorage");
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(CraftingRecipe), nameof(CraftingRecipe.consumeIngredients)),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(HarmonyRecipePatchConsumeIngredients), nameof(HarmonyRecipePatchConsumeIngredients.Prefix)))
+            );
+            harmony.Patch(
+                original: AccessTools.Method(typeof(CraftingRecipe), nameof(CraftingRecipe.drawRecipeDescription)),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(HarmonyRecipePatchDraw), nameof(HarmonyRecipePatchDraw.Prefix)))
+            );
         }
 
         /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
