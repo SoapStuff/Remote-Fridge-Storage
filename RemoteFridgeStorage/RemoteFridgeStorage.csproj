@@ -47,6 +47,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="apis\ICookingSkillApi.cs" />
+    <Compile Include="apis\IRemoteFridgeApi.cs" />
+    <Compile Include="apis\RemoteFridgeApi.cs" />
     <Compile Include="FridgeHandler.cs" />
     <Compile Include="HarmonyRecipePatch.cs" />
     <Compile Include="ModEntry.cs" />

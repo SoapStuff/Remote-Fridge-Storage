@@ -242,7 +242,7 @@ namespace RemoteFridgeStorage
         public void LoadMenu(IClickableMenu newMenu)
         {
             FridgeList = new FridgeVirtualList(this);
-            if (!_cookingSkillLoaded || ModEntry.Instance.CookinSkillApi == null)
+            if (!_cookingSkillLoaded || ModEntry.Instance.CookingSkillApi == null)
             {
                 Game1.activeClickableMenu = new RemoteFridgeCraftingPage(newMenu, this);
             }
