@@ -18,6 +18,9 @@ namespace RemoteFridgeStorage
         private bool _cookingSkillLoaded;
         private FridgeHandler _handler;
 
+        /// <summary>The mod configuration from the player.</summary>
+        public Config Config;
+
         public static ModEntry Instance { get; private set; }
 
         /// <inheritdoc />
@@ -26,9 +29,12 @@ namespace RemoteFridgeStorage
         public override void Entry(IModHelper helper)
         {
             Instance = this;
+            Config = helper.ReadConfig<Config>();
             // Assets
-            var fridgeSelected = helper.Content.Load<Texture2D>("assets/fridge.png");
-            var fridgeDeselected = helper.Content.Load<Texture2D>("assets/fridge2.png");
+            var fridgeSelected =
+                helper.Content.Load<Texture2D>(Config.FlipImage ? "assets/fridge-flipped.png" : "assets/fridge.png");
+            var fridgeDeselected =
+                helper.Content.Load<Texture2D>(Config.FlipImage ? "assets/fridge2-flipped.png" : "assets/fridge2.png");
             // Compatibility checks
             _cookingSkillLoaded = helper.ModRegistry.IsLoaded("spacechase0.CookingSkill");
             var categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests");
@@ -41,7 +47,7 @@ namespace RemoteFridgeStorage
 
             var offsetIcon = categorizeChestsLoaded || convenientChestsLoaded || megaStorageLoaded;
 
-            _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, offsetIcon);
+            _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, offsetIcon, Config);
             Harmony();
             AddEvents(helper);
         }
@@ -107,6 +113,7 @@ namespace RemoteFridgeStorage
         /// <param name="e">The event data.</param>
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.Game_Update();
         }
 
@@ -124,6 +131,7 @@ namespace RemoteFridgeStorage
         /// <param name="e">The event data.</param>
         private void OnSaving(object sender, SavingEventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.BeforeSave();
         }
 
@@ -132,6 +140,7 @@ namespace RemoteFridgeStorage
         /// <param name="e">The event data.</param>
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.AfterLoad();
         }
 
@@ -141,6 +150,7 @@ namespace RemoteFridgeStorage
         /// <param name="e">The event data.</param>
         private void OnRenderedActiveMenu(object sender, RenderedActiveMenuEventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             _handler.DrawFridge();
         }
 
@@ -149,6 +159,7 @@ namespace RemoteFridgeStorage
         /// <param name="e">The event data.</param>
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
+            if (!Context.IsWorldReady) return;
             if (e.Button == SButton.MouseLeft)
             {
                 _handler.HandleClick(e.Cursor);

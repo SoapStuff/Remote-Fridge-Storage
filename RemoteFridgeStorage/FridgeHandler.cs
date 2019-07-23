@@ -14,9 +14,11 @@ namespace RemoteFridgeStorage
 {
     public class FridgeHandler
     {
+        private readonly Config _config;
         private readonly bool _offsetIcon;
         private readonly ClickableTextureComponent _fridgeSelected;
         private readonly ClickableTextureComponent _fridgeDeselected;
+
 
         /// <summary>
         /// The chests to be used by the fridge.
@@ -36,10 +38,14 @@ namespace RemoteFridgeStorage
         /// </summary>
         private bool _opened;
 
+        private bool _dragging;
+
         public bool MenuEnabled { get; set; }
 
-        public FridgeHandler(Texture2D fridgeSelectedIcon, Texture2D fridgeDeselectedIcon, bool offsetIcon)
+        public FridgeHandler(Texture2D fridgeSelectedIcon, Texture2D fridgeDeselectedIcon, bool offsetIcon,
+            Config config)
         {
+            _config = config;
             _offsetIcon = offsetIcon;
             _fridgeSelected = new ClickableTextureComponent(Rectangle.Empty, fridgeSelectedIcon, Rectangle.Empty, 1f);
             _fridgeDeselected =
@@ -65,14 +71,20 @@ namespace RemoteFridgeStorage
                 xOffset = -1.0;
                 yOffset = -0.25;
             }
-
+            
             var xScaledOffset = (int) (xOffset * Game1.tileSize);
             var yScaledOffset = (int) (yOffset * Game1.tileSize);
 
-            _fridgeSelected.bounds = _fridgeDeselected.bounds = new Rectangle(
-                menu.xPositionOnScreen - 17 * Game1.pixelZoom + xScaledOffset,
-                menu.yPositionOnScreen + yScaledOffset + Game1.pixelZoom * 5, 16 * Game1.pixelZoom,
-                16 * Game1.pixelZoom);
+            var screenX = menu.xPositionOnScreen - 17 * Game1.pixelZoom + xScaledOffset;
+            var screenY = menu.yPositionOnScreen + yScaledOffset + Game1.pixelZoom * 5;
+            
+            if (_config.OverrideOffset)
+            {
+                screenX = _config.XOffset;
+                screenY = _config.YOffset;
+            }
+            _fridgeSelected.bounds = _fridgeDeselected.bounds = new Rectangle(screenX, screenY,
+                (int) (_config.ImageScale * 16 * Game1.pixelZoom), (int) (_config.ImageScale * 16 * Game1.pixelZoom));
         }
 
         /// <summary>
@@ -176,7 +188,7 @@ namespace RemoteFridgeStorage
             if (!(gameLocationObject is Chest chest)) return;
 
             if (!chest.fridge.Value || chest == farmHouse?.fridge.Value) return;
-            
+
             Chests.Add(chest);
             chest.fridge.Value = false;
         }
@@ -208,6 +220,41 @@ namespace RemoteFridgeStorage
         /// Listen to ticks update to determine when a chest opens or closes.
         /// </summary>
         public void Game_Update()
+        {
+            UpdateChest();
+            UpdateOffset();
+        }
+
+        /// <summary>
+        /// Update the position of the icon when dragging it while holding the right mouse button 
+        /// </summary>
+        private void UpdateOffset()
+        {
+            if (GetOpenChest() == null) return;
+            var mouseButton = new InputButton(false).ToSButton();
+            if (ModEntry.Instance.Helper.Input.IsDown(mouseButton))
+            {
+                var screenPixels = ModEntry.Instance.Helper.Input.GetCursorPosition().ScreenPixels;
+                if (_dragging)
+                {
+                    _config.XOffset = (int) screenPixels.X;
+                    _config.YOffset = (int) screenPixels.Y;
+                    _config.OverrideOffset = true;
+                    ModEntry.Instance.Helper.Input.Suppress(mouseButton);
+                }
+                else if (_fridgeSelected.containsPoint((int) screenPixels.X, (int) screenPixels.Y))
+                {
+                    _dragging = true;
+                }
+            }
+            else
+            {
+                _dragging = false;
+                ModEntry.Instance.Helper.WriteConfig(_config);
+            }
+        }
+
+        private void UpdateChest()
         {
             var chest = GetOpenChest();
             if (chest == null && _opened)

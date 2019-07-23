@@ -49,6 +49,7 @@
     <Compile Include="API\ICookingSkillApi.cs" />
     <Compile Include="API\IRemoteFridgeApi.cs" />
     <Compile Include="API\RemoteFridgeApi.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="CraftingPage\HarmonyRecipePatch.cs" />
     <Compile Include="CraftingPage\RemoteFrigdeCraftingMenu.cs" />
     <Compile Include="FridgeHandler.cs" />
@@ -63,9 +64,11 @@
     <Content Include="assets\craft2.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="assets\fridge-flipped.png" />
     <Content Include="assets\fridge.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="assets\fridge2-flipped.png" />
     <Content Include="assets\fridge2.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
