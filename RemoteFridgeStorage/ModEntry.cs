@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Harmony;
-using Microsoft.Xna.Framework.Graphics;
-using RemoteFridgeStorage.API;
-using RemoteFridgeStorage.CraftingPage;
+﻿using Microsoft.Xna.Framework.Graphics;
+using RemoteFridgeStorage.controller;
+using RemoteFridgeStorage.controller.saving;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewValley;
 
 namespace RemoteFridgeStorage
 {
@@ -14,11 +10,16 @@ namespace RemoteFridgeStorage
     /// <summary>The mod entry point.</summary>
     public class ModEntry : Mod
     {
-        private bool _cookingSkillLoaded;
-        private FridgeHandler _handler;
-
         /// <summary>The mod configuration from the player.</summary>
         public Config Config;
+
+        public FridgeController FridgeController;
+
+        public ChestController ChestController;
+
+        public SaveManager SaveManager;
+        
+        private CompatibilityInfo _compatibilityInfo;
 
         public static ModEntry Instance { get; private set; }
 
@@ -29,148 +30,140 @@ namespace RemoteFridgeStorage
         {
             Instance = this;
             Config = helper.ReadConfig<Config>();
-            // Assets
-            var fridgeSelected =
-                helper.Content.Load<Texture2D>(Config.FlipImage ? "assets/fridge-flipped.png" : "assets/fridge.png");
-            var fridgeDeselected =
-                helper.Content.Load<Texture2D>(Config.FlipImage ? "assets/fridge2-flipped.png" : "assets/fridge2.png");
-            // Compatibility checks
-            _cookingSkillLoaded = helper.ModRegistry.IsLoaded("spacechase0.CookingSkill");
-            var categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests");
-            var convenientChestsLoaded = helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
-            var megaStorageLoaded = helper.ModRegistry.IsLoaded("Alek.MegaStorage");
 
-            if (categorizeChestsLoaded) Monitor.Log("Categorize chests detected, moving icon location.", LogLevel.Info);
-            if (convenientChestsLoaded) Monitor.Log("Convenient chests detected, moving icon location.", LogLevel.Info);
-            if (megaStorageLoaded) Monitor.Log("Mega Storage detected, moving icon location.", LogLevel.Info);
+            var textures = LoadAssets(helper);
+            _compatibilityInfo = GetCompatibilityInfo(helper);
 
-            var offsetIcon = categorizeChestsLoaded || convenientChestsLoaded || megaStorageLoaded;
-
-            _handler = new FridgeHandler(fridgeSelected, fridgeDeselected, offsetIcon, Config);
-            AddEvents(helper);
+            ChestController = new ChestController(textures, _compatibilityInfo, Config);
+            FridgeController = new FridgeController(ChestController);
+            SaveManager = new SaveManager(ChestController);
+            
+            Helper.Events.Display.MenuChanged += OnMenuChanged;
+            Helper.Events.Display.RenderingActiveMenu += OnRenderingActiveMenu;
+            Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.GameLoop.SaveLoaded += SaveManager.SaveLoaded;
+            Helper.Events.GameLoop.Saving += SaveManager.Saving;
         }
-
-        private void AddEvents(IModHelper helper)
+        
+        /// <summary>
+        /// Check for loaded mods for compatibility reasons
+        /// </summary>
+        /// <param name="helper"></param>
+        /// <returns></returns>
+        private static CompatibilityInfo GetCompatibilityInfo(IModHelper helper)
         {
-            helper.Events.Display.MenuChanged += OnMenuChanged;
-            helper.Events.Display.RenderedActiveMenu += OnRenderedActiveMenu;
-            helper.Events.GameLoop.GameLaunched += OnGameLaunched;
-            helper.Events.Input.ButtonPressed += OnButtonPressed;
+            // Compatibility checks
+            bool cookingSkillLoaded = helper.ModRegistry.IsLoaded("spacechase0.CookingSkill");
+            bool categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests");
+            bool convenientChestsLoaded = helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
+            bool megaStorageLoaded = helper.ModRegistry.IsLoaded("Alek.MegaStorage");
 
-            helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-            helper.Events.GameLoop.Saving += OnSaving;
-            helper.Events.GameLoop.Saved += OnSaved;
-            helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+            var compatibilityInfo = new CompatibilityInfo
+            {
+                CategorizeChestLoaded = categorizeChestsLoaded,
+                ConvenientChestLoaded = convenientChestsLoaded,
+                CookingSkillLoaded = cookingSkillLoaded,
+                MegaStorageLoaded = megaStorageLoaded
+            };
+            return compatibilityInfo;
         }
 
         /// <summary>
-        /// Raised after the game is launched, right before the first update tick. This happens once per game session (unrelated to loading saves). All mods are loaded and initialised at this point, so this is a good time to set up mod integrations.
+        /// Load the textures
         /// </summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
+        /// <param name="helper"></param>
+        /// <returns></returns>
+        private static Textures LoadAssets(IModHelper helper)
         {
-            if (!_cookingSkillLoaded) return;
-            var cookingSkillApi = Helper.ModRegistry.GetApi<ICookingSkillApi>("spacechase0.CookingSkill");
+            // Assets
+            var fridgeSelected = helper.Content.Load<Texture2D>("assets/fridge.png");
+            var fridgeSelectedAlt = helper.Content.Load<Texture2D>("assets/fridge-flipped.png");
+            var fridgeDeselected = helper.Content.Load<Texture2D>("assets/fridge2.png");
+            var fridgeDeselectedAlt = helper.Content.Load<Texture2D>("assets/fridge2-flipped.png");
 
-            if (cookingSkillApi == null)
+            var textures = new Textures
             {
-                Monitor.Log("Could not load CookingSkill API, mods might not work correctly.", LogLevel.Warn);
-            }
-            else
-            {
-                cookingSkillApi.setFridgeFunction(Fridge);
-                _handler.CookingSkillApi = cookingSkillApi;
-                Monitor.Log("Successfully hooked into the cooking skill API!", LogLevel.Info);
-            }
+                FridgeSelected = fridgeSelected,
+                FridgeDeselected = fridgeDeselected,
+                FridgeSelectedAlt = fridgeSelectedAlt,
+                FridgeDeselectedAlt = fridgeDeselectedAlt
+            };
+            return textures;
         }
 
-        /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
+        /// <summary>
+        /// Draw the icon
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnRenderingActiveMenu(object sender, RenderingActiveMenuEventArgs e)
         {
             if (!Context.IsWorldReady) return;
-            _handler.Game_Update();
+            ChestController.DrawFridgeIcon();
         }
 
-        /// <summary>Raised after the game finishes writing data to the save file (except the initial save creation).</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnSaved(object sender, SavedEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            _handler.AfterSave();
-        }
-
-        /// <summary>Raised before the game begins writes data to the save file (except the initial save creation).</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnSaving(object sender, SavingEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            _handler.BeforeSave();
-        }
-
-        /// <summary>Raised after the player loads a save slot and the world is initialised.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            _handler.AfterLoad();
-        }
-
-
-        /// <summary>When a menu is open (<see cref="Game1.activeClickableMenu"/> isn't null), raised after that menu is drawn to the sprite batch but before it's rendered to the screen.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnRenderedActiveMenu(object sender, RenderedActiveMenuEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            _handler.DrawFridge();
-        }
-
-        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-            if (e.Button == SButton.MouseLeft)
-            {
-                _handler.HandleClick(e.Cursor);
-            }
-        }
-
-        /// <summary>Raised after a game menu is opened, closed, or replaced.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
+        /// <summary>
+        /// Add chests to fridge
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnMenuChanged(object sender, MenuChangedEventArgs e)
         {
             if (!Context.IsWorldReady) return;
+            if (e.NewMenu == e.OldMenu || e.NewMenu == null)
+                return;
 
-            // If the opened menu was a crafting menu, call the handler to load the menu.
-            //Replace menu if the new menu has the attribute cooking set to true and the new menu is not my crafting page.
-            if (e.NewMenu != null &&
+            // If The (Cooking) Crafting page is opened
+            if (!_compatibilityInfo.CookingSkillLoaded && e.NewMenu is StardewValley.Menus.CraftingPage &&
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking", false) != null &&
-                Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue() &&
-                !(e.NewMenu is RemoteFridgeCraftingPage) && 
-                (e.NewMenu is StardewValley.Menus.CraftingPage page)
-                )
+                Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue())
             {
-                _handler.LoadMenu(page);
+                FridgeController.InjectItems();
+            }
+
+            // If the Cooking Skill Page is opened.
+            if (_compatibilityInfo.CookingSkillLoaded && e.NewMenu.GetType().ToString() == "CookingSkill.NewCraftingPage")
+            {
+                FridgeController.InjectItems();
             }
         }
 
-        public override object GetApi()
+        /// <summary>
+        /// Handle clicking of the fridge icons.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
-            return new RemoteFridgeApi(_handler);
+            if (!Context.IsWorldReady) return;
+            ChestController.HandleClick(e.Cursor);
         }
 
-        public IList<Item> Fridge()
+        /// <summary>
+        /// Container for textures
+        /// </summary>
+        public struct Textures
         {
-            return _handler.FridgeList;
+            public Texture2D FridgeSelected;
+            public Texture2D FridgeSelectedAlt;
+            public Texture2D FridgeDeselected;
+            public Texture2D FridgeDeselectedAlt;
+        }
+
+        /// <summary>
+        /// Container for modInfo
+        /// </summary>
+        public struct CompatibilityInfo
+        {
+            public bool CookingSkillLoaded;
+            public bool CategorizeChestLoaded;
+            public bool ConvenientChestLoaded;
+            public bool MegaStorageLoaded;
+        }
+
+        public void Log(string s)
+        {
+            Monitor.Log(s);
         }
     }
 }
