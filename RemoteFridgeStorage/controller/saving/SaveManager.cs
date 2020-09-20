@@ -31,7 +31,7 @@ namespace RemoteFridgeStorage.controller.saving
         {
             string savePath = $"save_data/{Constants.SaveFolderName}.json";
             var helperData = ModEntry.Instance.Helper.Data;
-            var chestData = helperData.ReadSaveData<SaveData>(savePath) ?? new SaveData(new List<ChestData>());
+            var chestData = helperData.ReadJsonFile<SaveData>(savePath) ?? new SaveData(new List<ChestData>());
 
             try
             {
