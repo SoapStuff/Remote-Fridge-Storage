@@ -13,10 +13,12 @@ namespace RemoteFridgeStorage.controller.saving
     public class SaveManager
     {
         private readonly ChestController _chestController;
+        private readonly Config _config;
 
-        public SaveManager(ChestController chestController)
+        public SaveManager(ChestController chestController, Config config)
         {
             _chestController = chestController;
+            _config = config;
         }
 
         /// <summary>
@@ -29,7 +31,7 @@ namespace RemoteFridgeStorage.controller.saving
         {
             string savePath = $"save_data/{Constants.SaveFolderName}.json";
             var helperData = ModEntry.Instance.Helper.Data;
-            var chestData = helperData.ReadJsonFile<SaveData>(savePath) ?? new SaveData(new List<ChestData>());
+            var chestData = helperData.ReadSaveData<SaveData>(savePath) ?? new SaveData(new List<ChestData>());
 
             try
             {

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Locations;
@@ -22,6 +24,9 @@ namespace RemoteFridgeStorage.controller
         private readonly bool _offsetIcon;
 
         private readonly HashSet<Chest> _chests;
+        private readonly bool _chestAnywhereLoaded;
+
+        private Chest _openChest;
 
         /// <summary>
         /// New ChestController
@@ -31,11 +36,13 @@ namespace RemoteFridgeStorage.controller
         /// <param name="config">The mod config</param>
         public ChestController(ModEntry.Textures textures, ModEntry.CompatibilityInfo compatibilityInfo, Config config)
         {
+            _openChest = null;
             _chests = new HashSet<Chest>();
             _config = config;
             _offsetIcon =
                 compatibilityInfo.CategorizeChestLoaded || compatibilityInfo.ConvenientChestLoaded ||
                 compatibilityInfo.MegaStorageLoaded;
+            _chestAnywhereLoaded = compatibilityInfo.ChestAnywhereLoaded;
             _fridgeSelected =
                 new ClickableTextureComponent(Rectangle.Empty, textures.FridgeSelected, Rectangle.Empty, 1f);
             _fridgeDeselected =
@@ -50,17 +57,31 @@ namespace RemoteFridgeStorage.controller
         /// Gets the chest that is currently open or null if no chest is open.
         /// </summary>
         /// <returns>The chest that is open</returns>
-        private static Chest GetOpenChest()
+        private Chest GetOpenChest()
         {
-            if (Game1.activeClickableMenu == null)
-                return null;
+            var clickableMenu = Game1.activeClickableMenu;
 
-            if (!(Game1.activeClickableMenu is ItemGrabMenu)) return null;
 
-            var menu = (ItemGrabMenu) Game1.activeClickableMenu;
-            if (menu.behaviorOnItemGrab?.Target is Chest chest)
+            var itemGrabMenu = clickableMenu as ItemGrabMenu;
+            if (itemGrabMenu?.behaviorOnItemGrab?.Target == null) return null;
+            if (itemGrabMenu.behaviorOnItemGrab.Target is Chest chest)
                 return chest;
+            return _chestAnywhereLoaded && itemGrabMenu.behaviorOnItemGrab.Target.GetType().ToString()
+                       .Equals("Pathoschild.Stardew.ChestsAnywhere.Framework.Containers.ChestContainer")
+                ? ChestsAnywhere(itemGrabMenu.behaviorOnItemGrab.Target)
+                : null;
+        }
 
+        private static Chest ChestsAnywhere(object target)
+        {
+            var field = target.GetType().GetField("Chest", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null)
+            {
+                return field.GetValue(target) as Chest;
+            }
+
+            ModEntry.Instance.Monitor.Log($"GetOpenChest failed: {target.GetType()}.Chest not found.",
+                LogLevel.Warn);
             return null;
         }
 
@@ -133,7 +154,7 @@ namespace RemoteFridgeStorage.controller
         /// </summary>
         public void DrawFridgeIcon()
         {
-            var openChest = GetOpenChest();
+            var openChest = this._openChest;
             if (openChest == null) return;
 
             var farmHouse = Game1.getLocationFromName("farmHouse") as FarmHouse;
@@ -156,6 +177,38 @@ namespace RemoteFridgeStorage.controller
             Game1.spriteBatch.Draw(Game1.mouseCursors, new Vector2(Game1.getOldMouseX(), Game1.getOldMouseY()),
                 Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 0, 16, 16), Color.White, 0f, Vector2.Zero,
                 4f + Game1.dialogueButtonScale / 150f, SpriteEffects.None, 0);
+        }
+
+        /// <summary>
+        /// Update the position of the icon when dragging it while holding the right mouse button 
+        /// </summary>
+        public void UpdateOffset()
+        {
+            if (!_config.Editable || !_config.OverrideOffset) return;
+            if (_openChest == null) return;
+            var input = ModEntry.Instance.Helper.Input;
+            var up = Keys.Up.ToSButton();
+            var down = Keys.Down.ToSButton();
+            var left = Keys.Left.ToSButton();
+            var right = Keys.Right.ToSButton();
+
+            //Check for updating of config.
+            if (!input.IsDown(left) && !input.IsDown(right) && !input.IsDown(up) && !input.IsDown(down))
+            {
+                var upState = input.GetState(up);
+                var downState = input.GetState(down);
+                var leftState = input.GetState(left);
+                var rightState = input.GetState(right);
+                if (upState == SButtonState.Released || downState == SButtonState.Released ||
+                    leftState == SButtonState.Released || rightState == SButtonState.Released)
+                    ModEntry.Instance.Helper.WriteConfig(_config);
+            }
+
+            int dx = (input.IsDown(left) ? -1 : 0) + (input.IsDown(right) ? 1 : 0);
+            int dy = (input.IsDown(up) ? -1 : 0) + (input.IsDown(down) ? 1 : 0);
+
+            _config.XOffset += dx;
+            _config.YOffset += dy;
         }
 
         /// <summary>
@@ -186,6 +239,11 @@ namespace RemoteFridgeStorage.controller
         public void ClearChests()
         {
             _chests.Clear();
+        }
+
+        public void UpdateChest()
+        {
+            _openChest = GetOpenChest();
         }
     }
 }

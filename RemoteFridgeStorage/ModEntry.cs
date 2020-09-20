@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using RemoteFridgeStorage.API;
 using RemoteFridgeStorage.controller;
 using RemoteFridgeStorage.controller.saving;
 using StardewModdingAPI;
@@ -18,7 +19,7 @@ namespace RemoteFridgeStorage
         public ChestController ChestController;
 
         public SaveManager SaveManager;
-        
+
         private CompatibilityInfo _compatibilityInfo;
 
         public static ModEntry Instance { get; private set; }
@@ -36,15 +37,58 @@ namespace RemoteFridgeStorage
 
             ChestController = new ChestController(textures, _compatibilityInfo, Config);
             FridgeController = new FridgeController(ChestController);
-            SaveManager = new SaveManager(ChestController);
-            
+            SaveManager = new SaveManager(ChestController,Config);
+
             Helper.Events.Display.MenuChanged += OnMenuChanged;
             Helper.Events.Display.RenderingActiveMenu += OnRenderingActiveMenu;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.SaveLoaded += SaveManager.SaveLoaded;
             Helper.Events.GameLoop.Saving += SaveManager.Saving;
+            Helper.Events.GameLoop.GameLaunched += OnLaunch;
+            Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
         }
-        
+
+        /// <summary>
+        /// Handle the mod menu api
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnLaunch(object sender, GameLaunchedEventArgs e)
+        {
+            var api = Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            if (api == null) return;
+
+            Monitor.Log("Loaded Generic Mod Config Menu API", LogLevel.Info);
+
+            api.RegisterModConfig(ModManifest,
+                () => Config = new Config(),
+                () => Helper.WriteConfig(Config));
+            api.RegisterSimpleOption(ModManifest, "Flip Image", "Mirrors the image vertically", () => Config.FlipImage,
+                (bool val) => Config.FlipImage = val);
+            api.RegisterClampedOption(ModManifest, "Image Scale", "Scale of the image", () => (float) Config.ImageScale,
+                (float val) => Config.ImageScale = val, 0.1f, 5.0f);
+            api.RegisterSimpleOption(ModManifest, "Manual Placement",
+                "Will use the positions defined below for placement instead of the default one",
+                () => Config.OverrideOffset, OverrideSet);
+            api.RegisterSimpleOption(ModManifest, "X Position", "The x position of the icon", () => Config.XOffset,
+                (int val) => Config.XOffset = val);
+            api.RegisterSimpleOption(ModManifest, "Y Position", "The y position of the icon", () => Config.YOffset,
+                (int val) => Config.YOffset = val);
+            api.RegisterSimpleOption(ModManifest, "Draggable",
+                "Enable moving of the icon with the arrows", () => Config.Editable,
+                EditableSet);
+        }
+
+        private void OverrideSet(bool val)
+        {
+            Config.OverrideOffset = val;
+        }
+
+        private void EditableSet(bool val)
+        {
+            Config.Editable = val;
+        }
+
         /// <summary>
         /// Check for loaded mods for compatibility reasons
         /// </summary>
@@ -57,13 +101,15 @@ namespace RemoteFridgeStorage
             bool categorizeChestsLoaded = helper.ModRegistry.IsLoaded("CategorizeChests");
             bool convenientChestsLoaded = helper.ModRegistry.IsLoaded("aEnigma.ConvenientChests");
             bool megaStorageLoaded = helper.ModRegistry.IsLoaded("Alek.MegaStorage");
+            bool chestAnywhereLoaded = helper.ModRegistry.IsLoaded("Pathoschild.ChestsAnywhere");
 
             var compatibilityInfo = new CompatibilityInfo
             {
                 CategorizeChestLoaded = categorizeChestsLoaded,
                 ConvenientChestLoaded = convenientChestsLoaded,
                 CookingSkillLoaded = cookingSkillLoaded,
-                MegaStorageLoaded = megaStorageLoaded
+                MegaStorageLoaded = megaStorageLoaded,
+                ChestAnywhereLoaded = chestAnywhereLoaded
             };
             return compatibilityInfo;
         }
@@ -110,6 +156,7 @@ namespace RemoteFridgeStorage
         private void OnMenuChanged(object sender, MenuChangedEventArgs e)
         {
             if (!Context.IsWorldReady) return;
+            ChestController.UpdateChest();
             if (e.NewMenu == e.OldMenu || e.NewMenu == null)
                 return;
 
@@ -122,7 +169,8 @@ namespace RemoteFridgeStorage
             }
 
             // If the Cooking Skill Page is opened.
-            if (_compatibilityInfo.CookingSkillLoaded && e.NewMenu.GetType().ToString() == "CookingSkill.NewCraftingPage")
+            if (_compatibilityInfo.CookingSkillLoaded &&
+                e.NewMenu.GetType().ToString() == "CookingSkill.NewCraftingPage")
             {
                 FridgeController.InjectItems();
             }
@@ -136,7 +184,19 @@ namespace RemoteFridgeStorage
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
             if (!Context.IsWorldReady) return;
-            ChestController.HandleClick(e.Cursor);
+            if (e.Button == SButton.MouseLeft)
+            {
+                ChestController.HandleClick(e.Cursor);
+            }
+        }
+
+        /// <summary>Raised after the game state is updated (≈60 times per second).</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
+        {
+            if (!Context.IsWorldReady) return;
+            ChestController.UpdateOffset();
         }
 
         /// <summary>
@@ -159,6 +219,7 @@ namespace RemoteFridgeStorage
             public bool CategorizeChestLoaded;
             public bool ConvenientChestLoaded;
             public bool MegaStorageLoaded;
+            public bool ChestAnywhereLoaded;
         }
 
         public void Log(string s)

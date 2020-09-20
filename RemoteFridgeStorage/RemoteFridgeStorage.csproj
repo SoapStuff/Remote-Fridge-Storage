@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="API\IGenericModConfigMenuAPI.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="controller\ChestController.cs" />
     <Compile Include="controller\FridgeController.cs" />
@@ -65,9 +66,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="manifest.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="API" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
