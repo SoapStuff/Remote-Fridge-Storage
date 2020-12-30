@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Menus;
 using StardewValley.Objects;
 
 namespace RemoteFridgeStorage.controller
@@ -32,10 +34,10 @@ namespace RemoteFridgeStorage.controller
                 return;
 
             // Add them as material containers to current CraftingPage
-            var prop = page.GetType().GetField("_materialContainers", BindingFlags.NonPublic | BindingFlags.Instance);
+            var prop = page.GetType().GetField("_materialContainers", BindingFlags.Public | BindingFlags.Instance);
             if (prop == null)
             {
-                ModEntry.Instance.Log($"CraftFromChests failed: {page.GetType()}._materialContainers not found.");
+                ModEntry.Instance.Monitor.Log($"Failed to inject: {page.GetType()}._materialContainers not found.", LogLevel.Error);
                 return;
             }
 

@@ -165,6 +165,7 @@ namespace RemoteFridgeStorage
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking", false) != null &&
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue())
             {
+                Monitor.Log("- Opened cooking menu", LogLevel.Debug);
                 FridgeController.InjectItems();
             }
 
