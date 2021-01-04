@@ -34,7 +34,7 @@ namespace RemoteFridgeStorage.controller
                 return;
 
             // Add them as material containers to current CraftingPage
-            var prop = page.GetType().GetField("_materialContainers", BindingFlags.Public | BindingFlags.Instance);
+            var prop = page.GetType().GetField("_materialContainers", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
             if (prop == null)
             {
                 ModEntry.Instance.Monitor.Log($"Failed to inject: {page.GetType()}._materialContainers not found.", LogLevel.Error);
