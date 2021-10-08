@@ -40,7 +40,7 @@ namespace RemoteFridgeStorage
             SaveManager = new SaveManager(ChestController,Config);
 
             Helper.Events.Display.MenuChanged += OnMenuChanged;
-            Helper.Events.Display.RenderingActiveMenu += OnRenderingActiveMenu;
+            Helper.Events.Display.RenderedActiveMenu += OnRenderedActiveMenu;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.SaveLoaded += SaveManager.SaveLoaded;
             Helper.Events.GameLoop.Saving += SaveManager.Saving;
@@ -142,10 +142,10 @@ namespace RemoteFridgeStorage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnRenderingActiveMenu(object sender, RenderingActiveMenuEventArgs e)
+        private void OnRenderedActiveMenu(object sender, RenderedActiveMenuEventArgs e)
         {
             if (!Context.IsWorldReady) return;
-            ChestController.DrawFridgeIcon();
+            ChestController.DrawFridgeIcon(e);
         }
 
         /// <summary>

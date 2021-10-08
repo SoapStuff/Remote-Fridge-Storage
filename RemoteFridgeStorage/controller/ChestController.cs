@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
@@ -43,14 +44,15 @@ namespace RemoteFridgeStorage.controller
                 compatibilityInfo.CategorizeChestLoaded || compatibilityInfo.ConvenientChestLoaded ||
                 compatibilityInfo.MegaStorageLoaded;
             _chestAnywhereLoaded = compatibilityInfo.ChestAnywhereLoaded;
+            var sourceRect = new Rectangle(0, 0, textures.FridgeSelected.Width, textures.FridgeSelected.Height);
             _fridgeSelected =
-                new ClickableTextureComponent(Rectangle.Empty, textures.FridgeSelected, Rectangle.Empty, 1f);
+                new ClickableTextureComponent(sourceRect, textures.FridgeSelected, sourceRect, 1f);
             _fridgeDeselected =
-                new ClickableTextureComponent(Rectangle.Empty, textures.FridgeDeselected, Rectangle.Empty, 1f);
+                new ClickableTextureComponent(sourceRect, textures.FridgeDeselected, sourceRect, 1f);
             _fridgeSelectedAlt =
-                new ClickableTextureComponent(Rectangle.Empty, textures.FridgeSelectedAlt, Rectangle.Empty, 1f);
+                new ClickableTextureComponent(sourceRect, textures.FridgeSelectedAlt, sourceRect, 1f);
             _fridgeDeselectedAlt =
-                new ClickableTextureComponent(Rectangle.Empty, textures.FridgeDeselectedAlt, Rectangle.Empty, 1f);
+                new ClickableTextureComponent(sourceRect, textures.FridgeDeselectedAlt, sourceRect, 1f);
         }
 
         /// <summary>
@@ -67,7 +69,7 @@ namespace RemoteFridgeStorage.controller
             if (itemGrabMenu.behaviorOnItemGrab.Target is Chest chest)
                 return chest;
             return _chestAnywhereLoaded && itemGrabMenu.behaviorOnItemGrab.Target.GetType().ToString()
-                       .Equals("Pathoschild.Stardew.ChestsAnywhere.Framework.Containers.ChestContainer")
+                .Equals("Pathoschild.Stardew.ChestsAnywhere.Framework.Containers.ChestContainer")
                 ? ChestsAnywhere(itemGrabMenu.behaviorOnItemGrab.Target)
                 : null;
         }
@@ -103,8 +105,8 @@ namespace RemoteFridgeStorage.controller
                 yOffset = -0.25;
             }
 
-            int xScaledOffset = (int) (xOffset * Game1.tileSize);
-            int yScaledOffset = (int) (yOffset * Game1.tileSize);
+            int xScaledOffset = (int)(xOffset * Game1.tileSize);
+            int yScaledOffset = (int)(yOffset * Game1.tileSize);
 
             int screenX = menu.xPositionOnScreen - 17 * Game1.pixelZoom + xScaledOffset;
             int screenY = menu.yPositionOnScreen + yScaledOffset + Game1.pixelZoom * 5;
@@ -117,8 +119,8 @@ namespace RemoteFridgeStorage.controller
             }
 
             var rectangle = new Rectangle(screenX, screenY,
-                (int) (_config.ImageScale * 16 * Game1.pixelZoom),
-                (int) (_config.ImageScale * 16 * Game1.pixelZoom));
+                (int)(_config.ImageScale * 16 * Game1.pixelZoom),
+                (int)(_config.ImageScale * 16 * Game1.pixelZoom));
 
             _fridgeSelected.bounds = _fridgeDeselected.bounds =
                 _fridgeSelectedAlt.bounds = _fridgeDeselectedAlt.bounds = rectangle;
@@ -133,9 +135,9 @@ namespace RemoteFridgeStorage.controller
             var chest = GetOpenChest();
             if (chest == null) return;
 
-            var screenPixels = cursor.ScreenPixels;
+            var screenPixels = Utility.ModifyCoordinatesForUIScale(cursor.ScreenPixels);
 
-            if (!_fridgeSelected.containsPoint((int) screenPixels.X, (int) screenPixels.Y)) return;
+            if (!_fridgeSelected.containsPoint((int)screenPixels.X, (int)screenPixels.Y)) return;
 
             Game1.playSound("smallSelect");
 
@@ -152,7 +154,8 @@ namespace RemoteFridgeStorage.controller
         /// <summary>
         /// Draw the icon.
         /// </summary>
-        public void DrawFridgeIcon()
+        /// <param name="renderingActiveMenuEventArgs"></param>
+        public void DrawFridgeIcon(RenderedActiveMenuEventArgs e)
         {
             var openChest = this._openChest;
             if (openChest == null) return;
@@ -165,13 +168,13 @@ namespace RemoteFridgeStorage.controller
             UpdatePos();
             if (_chests.Contains(openChest))
             {
-                if (_config.FlipImage) _fridgeSelectedAlt.draw(Game1.spriteBatch);
-                else _fridgeSelected.draw(Game1.spriteBatch);
+                if (_config.FlipImage) _fridgeSelectedAlt.draw(e.SpriteBatch, Color.White, 0);
+                else _fridgeSelected.draw(e.SpriteBatch, Color.White, 0);
             }
             else
             {
-                if (_config.FlipImage) _fridgeSelectedAlt.draw(Game1.spriteBatch);
-                else _fridgeDeselected.draw(Game1.spriteBatch);
+                if (_config.FlipImage) _fridgeDeselectedAlt.draw(e.SpriteBatch, Color.White, 0);
+                else _fridgeDeselected.draw(e.SpriteBatch, Color.White, 0);
             }
 
             Game1.spriteBatch.Draw(Game1.mouseCursors, new Vector2(Game1.getOldMouseX(), Game1.getOldMouseY()),
