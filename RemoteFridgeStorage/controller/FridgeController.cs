@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
@@ -35,6 +36,11 @@ namespace RemoteFridgeStorage.controller
             if (page is CraftingPage craftingPage)
             {
                 craftingPage._materialContainers.AddRange(nearbyChests);
+            }
+            else
+            {
+                ModEntry.Instance.Monitor.Log($"Failed to inject items into: {page.GetType()}. Is it from an incompatible mod?",
+                    LogLevel.Warn);
             }
         }
     }

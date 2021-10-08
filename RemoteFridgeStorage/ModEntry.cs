@@ -161,11 +161,12 @@ namespace RemoteFridgeStorage
                 return;
 
             // If The (Cooking) Crafting page is opened
-            if (!_compatibilityInfo.CookingSkillLoaded && e.NewMenu is StardewValley.Menus.CraftingPage &&
+            if (e.NewMenu is StardewValley.Menus.CraftingPage &&
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking", false) != null &&
                 Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue())
             {
                 FridgeController.InjectItems();
+                return;
             }
 
             // If the Cooking Skill Page is opened.
@@ -173,7 +174,15 @@ namespace RemoteFridgeStorage
                 e.NewMenu.GetType().ToString() == "CookingSkill.NewCraftingPage")
             {
                 FridgeController.InjectItems();
+                return;
             }
+
+            if (Helper.Reflection.GetField<bool>(e.NewMenu, "cooking", false) != null &&
+                Helper.Reflection.GetField<bool>(e.NewMenu, "cooking").GetValue())
+            {
+                Monitor.Log("Menu changed to " + e.NewMenu.GetType() + " which is a unrecognized type. Is it from an incompatible mod?",LogLevel.Warn);    
+            }
+            
         }
 
         /// <summary>
