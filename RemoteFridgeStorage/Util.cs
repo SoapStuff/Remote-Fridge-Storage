@@ -6,7 +6,7 @@ using StardewValley.Objects;
 
 namespace RemoteFridgeStorage
 {
-    public class Util
+    public static class Util
     {
         /// <summary>
         /// Get all game locations
