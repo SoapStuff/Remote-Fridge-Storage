@@ -1,13 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>RemoteFridgeStorage</RootNamespace>
-    <AssemblyName>RemoteFridgeStorage</AssemblyName>
-    <Version>1.0.0</Version>
-    <TargetFramework>net5.0</TargetFramework>
-	  <EnableHarmony>true</EnableHarmony>
-    <GamePath>E:\Games\Libraries\Steam\steamapps\common\Stardew Valley</GamePath>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.0" />
-  </ItemGroup>
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <GamePath>$StardewPath</GamePath>
+        <EnableHarmony>true</EnableHarmony>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+    </ItemGroup>
+
 </Project>

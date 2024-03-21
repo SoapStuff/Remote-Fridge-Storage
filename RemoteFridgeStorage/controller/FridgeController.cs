@@ -29,7 +29,7 @@ namespace RemoteFridgeStorage.controller
                 return;
 
             // Find nearby chests
-            var nearbyChests = _chestController.GetChests().ToList();
+            var nearbyChests = _chestController.GetChests().Select((chest, i) => chest.Items).ToList();
             if (!nearbyChests.Any())
                 return;
 
